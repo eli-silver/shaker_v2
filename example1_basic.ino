@@ -80,27 +80,6 @@ void loop(){
 	// Check if both gyroscope and accelerometer data is available.
 	if( myISM.checkStatus() ){
 		myISM.getAccel(&accelData);
-		myISM.getGyro(&gyroData);
-		Serial.print("Accelerometer: ");
-		Serial.print("X: ");
-		Serial.print(accelData.xData);
-		Serial.print(" ");
-		Serial.print("Y: ");
-		Serial.print(accelData.yData);
-		Serial.print(" ");
-		Serial.print("Z: ");
-		Serial.print(accelData.zData);
-		Serial.println(" ");
-		Serial.print("Gyroscope: ");
-		Serial.print("X: ");
-		Serial.print(gyroData.xData);
-		Serial.print(" ");
-		Serial.print("Y: ");
-		Serial.print(gyroData.yData);
-		Serial.print(" ");
-		Serial.print("Z: ");
-		Serial.print(gyroData.zData);
-		Serial.println(" ");
 	}
 
 	delay(100);
