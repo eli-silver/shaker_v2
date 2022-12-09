@@ -1,8 +1,6 @@
 import pygame
 import numpy
 import math
-from time import sleep
-
 #pygame.init()
 
 bits = 16
@@ -24,7 +22,7 @@ class Tone:
         self.sound_buff = self.get_sound_buff( freq, amp, speaker)
         self.sound = pygame.sndarray.make_sound(self.sound_buff)
         self.channel = None
-        print('New Tone: ' + str(freq) + "Hz   Volume: " + str(amp))
+        print('New Tone: ' + str(freq) + "Hz   Volume: " + str(round(100*amp)))
         
 
     def get_sound_buff(self, freq, amp, speaker=None):
