@@ -18,16 +18,18 @@ class Plot:
         self.screen = screen
         self.plt_width = width
         self.plt_height = height
-        self.plt_offset = [x,y+height//2]
-        
+        self.plt_offset = [x,y]
         self.x_scale = 1
         self.y_scale = 1
         self.total_time = 0
         self.x_pix_per_sec = 30
-        
         self.x_max_points = 50 #self.plt_width // (self.x_scale * self.x_pix_per_sec) - 1
         
-
+        
+        self.Y_MIN = -200
+        self.Y_MAX = 250
+        
+        self.plt_grid = True
         
         self.ax_queue = []
         self.ay_queue = []
@@ -38,10 +40,7 @@ class Plot:
     def update(self, time_delta):
         self.total_time += time_delta
         self.draw_background()
-        
-        #self.add_point('ax',self.total_time, random.randint(5, self.plt_height-5)-self.plt_height//2)
-        #self.add_point('ay', self.total_time, random.randint(5, self.plt_height-5)-self.plt_height//2)        
-        #self.add_point('az', self.total_time, random.randint(5, self.plt_height-5)-self.plt_height//2)
+    
         self.add_point('ax',self.total_time, math.sin(self.total_time * 2 * math.pi / 3)* 100)
         self.add_point('ay',self.total_time, math.sin(self.total_time * 2 * math.pi / .5)* 100)
         self.add_point('az',self.total_time, math.sin(self.total_time * 2 * math.pi / 1)* 100)
@@ -54,12 +53,16 @@ class Plot:
 
     def draw_background(self):
          pygame.draw.rect(self.screen,'grey',self.plot_area)
-         num_vert_lines =  5
-         vert_lines=[]
-         for i in range(num_vert_lines):
-             y_val = i * self.plt_height/num_vert_lines
-             self.draw_line('black',0,y_val,self.plt_width,y_val )
-             
+         num_vert_lines =  10
+         num_hori_lines = 12
+         if self.plt_grid:
+             for i in range(num_vert_lines+1):
+                 y_val = i * self.plt_height/num_vert_lines
+                 self.draw_line('black',0,y_val,self.plt_width,y_val )
+             for i in range(num_hori_lines+1):
+                 x_val = i * self.plt_width/num_hori_lines
+                 self.draw_line('black',x_val,0,x_val,self.plt_height )
+                 
              
     def add_point(self, trace, x, y):
         if trace == 'ax':
@@ -90,8 +93,15 @@ class Plot:
         if trace == 'az':
             self.draw_trace(self.az_queue, 'blue')
             return self.az_queue
-
-  
+        
+        
+    def coord_to_pixel(self,point):
+        pix_x = self.plt_offset[0] + point[0]
+        y_scaled = point[1]-self.Y_MIN / (self.Y_MAX-self.Y_MIN)
+        pix_y = self.plt_offset[1] - (y_scaled * self.plt_height)
+        return [pix_x, pix_y]
+    
+    
     def coords_to_pixels(self, coord_queue):
         pix_queue = []
         x_pix_offset = self.total_time * self.x_pix_per_sec
@@ -99,7 +109,7 @@ class Plot:
         for i in range(len(coord_queue)):
             point = coord_queue[i]
             pix_x = self.plt_width + self.plt_offset[0] + (point[0] * self.x_pix_per_sec) - x_pix_offset - 5
-            pix_y = self.plt_offset[1] - point[1]
+            pix_y = self.plt_offset[1] + self.plt_height//2- point[1]
             if pix_x > self.plt_offset[0] + 5:
                 pix_queue.append([pix_x, pix_y])
             else:
@@ -109,4 +119,7 @@ class Plot:
         return pix_queue
 
     def draw_line(self, color, x1,y1,x2,y2):
+        pt1 = self.coord_to_pixel([x1,y1])
+        pt2 = self.coord_to_pixel([x2,y2])
         pygame.draw.aaline(self.screen, color, (self.plt_offset[0]+ x1,self.plt_offset[1]+self.plt_height-y1),(self.plt_offset[0]+ x2,self.plt_offset[1]+self.plt_height-y2))
+        #pygame.draw.aaline(self.screen, color, pt1, pt2)
