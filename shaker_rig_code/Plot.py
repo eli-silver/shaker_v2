@@ -54,8 +54,13 @@ class Plot:
 
     def draw_background(self):
          pygame.draw.rect(self.screen,'grey',self.plot_area)
-         
-
+         num_vert_lines =  5
+         vert_lines=[]
+         for i in range(num_vert_lines):
+             y_val = i * self.plt_height/num_vert_lines
+             self.draw_line('black',0,y_val,self.plt_width,y_val )
+             
+             
     def add_point(self, trace, x, y):
         if trace == 'ax':
             queue = self.ax_queue
@@ -102,3 +107,6 @@ class Plot:
         for point in pop_list:    
             coord_queue.remove(point)
         return pix_queue
+
+    def draw_line(self, color, x1,y1,x2,y2):
+        pygame.draw.aaline(self.screen, color, (self.plt_offset[0]+ x1,self.plt_offset[1]+self.plt_height-y1),(self.plt_offset[0]+ x2,self.plt_offset[1]+self.plt_height-y2))
