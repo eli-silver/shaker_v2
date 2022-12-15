@@ -39,6 +39,7 @@ class serialPlot:
         self.accel_buff = np.zeros((100000,4))
         self.accel_buff_index = 0
         self.csv = open("accel_data.csv",'w')
+        self.csv_written = False
         
 
         print('Trying to connect to: ' + str(serialPort) + ' at ' + str(serialBaud) + ' BAUD.')
@@ -90,13 +91,14 @@ class serialPlot:
 
     def backgroundDAQ(self,file):
         privateData = copy.deepcopy(self.rawData[:])
-        if self.accel_buff_index == 100000:
+        if self.accel_buff_index == 100000 and self.csv_written == False:
             print('at 100000')
             self.accel_buff_index = 0
-            pd.DataFrame(self.accel_buff).to_csv('test_data_3.csv',header=None, index=None)
+            pd.DataFrame(self.accel_buff).to_csv('freq_200_vol_20.csv',header=None, index=None)
             #np.savetxt('test_data_2.csv',self.accel_buff,delimiter=',')
             #accel_list = ["{}\n".format(i) for i in self.accel_buff]
             #file.writelines(accel_list)
+            self.close()
             
         for i in range(self.numPlots):
             data = privateData[(i*self.dataNumBytes):((i+1)*self.dataNumBytes)]
