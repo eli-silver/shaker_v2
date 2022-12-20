@@ -10,7 +10,9 @@ from Tone import Tone
 import pygame
 from Window import Window
 from time import sleep
+from Serial_Monitor import Serial_monitor
 import threading
+import serial
 
 bits = 16
 sample_rate = 44100
@@ -30,7 +32,8 @@ class Shaker:
         self.tone_sequence = None
         self.fade_ms = 0
         self.speaker = 'r'
-        
+        self.serial_monitor = Serial_monitor()
+
         self.window = Window(self)
 
         

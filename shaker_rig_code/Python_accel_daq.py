@@ -34,10 +34,11 @@ class serialPlot:
         self.thread = None
         self.plotTimer = 0
         self.previousTimer = 0
-        self.buff_length = 1000
+        self.buff_length = 100_000
         self.accel_buff = np.zeros((self.buff_length,self.numPlots))
         self.prev_accel_buff = np.zeros((self.buff_length,self.numPlots))
         self.prev_accel_buff_ready = False
+        self.csv_written = False
         self.accel_buff_index = 0
         self.accel_buff_max = [0]*4
         self.accel_buff_min = [0]*4
@@ -112,8 +113,8 @@ class serialPlot:
             self.serialConnection.readinto(self.rawData)
             self.isReceiving = True
             # can run either backgroundDAQ() or background_buffer(), but not both!
-            #self.backgroundDAQ(file) 
-            self.background_buffer()
+            self.backgroundDAQ(file) 
+            #self.background_buffer()
         file.close()
 
 
@@ -122,8 +123,9 @@ class serialPlot:
         if self.accel_buff_index == self.buff_length and self.csv_written == False:
             print('buffer full. writing to csv')
             self.accel_buff_index = 0
-            pd.DataFrame(self.accel_buff).to_csv('22_12_15_test_data.csv',header=None, index=None)
+            pd.DataFrame(self.accel_buff).to_csv('./data/freq_50_vol_100.csv',header=None, index=None)
             self.close()
+            self.csv_written = True
             
         for i in range(self.numPlots):
             data = privateData[(i*self.dataNumBytes):((i+1)*self.dataNumBytes)]
@@ -167,8 +169,8 @@ def main():
     pltInterval = 40    # Period at which the plot animation updates [ms]
     xmin = 0
     xmax = maxPlotLength
-    ymin = 0
-    ymax = 5000
+    ymin = -1000
+    ymax = 1000
     fig = plt.figure(figsize=(10, 8))
     ax = plt.axes(xlim=(xmin, xmax), ylim=(float(ymin - (ymax - ymin) / 10), float(ymax + (ymax - ymin) / 10)))
     ax.set_title('Shaker Rig Accelerometer')
@@ -184,8 +186,8 @@ def main():
     for i in range(numPlots):
         lines.append(ax.plot([], [], style[i], label=lineLabel[i])[0])
         lineValueText.append(ax.text(0.70, 0.90-i*0.05, '', transform=ax.transAxes))
-    #anim = animation.FuncAnimation(fig, s.getSerialData, fargs=(lines, lineValueText, lineLabel, timeText), interval=pltInterval)    # fargs has to be a tuple
-    anim = animation.FuncAnimation(fig, s.get_accel_data, fargs=(lines, lineValueText, lineLabel, timeText), interval=pltInterval)    # fargs has to be a tuple
+    anim = animation.FuncAnimation(fig, s.getSerialData, fargs=(lines, lineValueText, lineLabel, timeText), interval=pltInterval)    # fargs has to be a tuple
+    #anim = animation.FuncAnimation(fig, s.get_accel_data, fargs=(lines, lineValueText, lineLabel, timeText), interval=pltInterval)    # fargs has to be a tuple
 
     plt.legend(loc="upper left")
     plt.show()
