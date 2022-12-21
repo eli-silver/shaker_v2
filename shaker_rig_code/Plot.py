@@ -21,10 +21,8 @@ class Plot:
         self.plt_offset = [x,y]
         self.x_scale = 1
         self.y_scale = 1
-        self.total_time = 0
-        self.x_pix_per_sec = 50.0
-        self.x_max_points = 50 #self.plt_width // (self.x_scale * self.x_pix_per_sec) - 1
-        
+        self.total_time = 0 # 
+        self.x_pix_per_sec = 50.0        
         
         self.Y_MIN = -150
         self.Y_MAX = 100
@@ -42,9 +40,9 @@ class Plot:
         self.total_time += time_delta
         self.draw_background()
     
-        self.add_point('ax',self.total_time, math.sin(self.total_time * 2 * math.pi / 3)* 80)
-        self.add_point('ay',self.total_time, math.sin(self.total_time * 2 * math.pi / .5)* 20)
-        self.add_point('az',self.total_time, math.sin(self.total_time * 2 * math.pi / 1)* 80 - 50)
+        #self.add_point('ax',self.total_time, math.sin(self.total_time * 2 * math.pi / 3)* 80)
+        #self.add_point('ay',self.total_time, math.sin(self.total_time * 2 * math.pi / .5)* 20)
+        #self.add_point('az',self.total_time, math.sin(self.total_time * 2 * math.pi / 1)* 80 - 50)
         
         self.update_trace('ax')
         self.update_trace('ay')

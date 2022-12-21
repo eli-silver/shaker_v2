@@ -13,28 +13,28 @@ def sine_t(amp, t, freq):
 
 class Tone:
         
-    def __init__(self, freq, amp, speaker=None, fade_ms=0):
+    def __init__(self, freq, vol, speaker=None, fade_ms=0):
 
         self.freq = freq
         self.speaker = speaker
-        self.amp = amp
+        self.vol = vol
         self.fade_ms = fade_ms
-        self.sound_buff = self.get_sound_buff( freq, amp, speaker)
+        self.sound_buff = self.get_sound_buff( freq, vol, speaker)
         self.sound = pygame.sndarray.make_sound(self.sound_buff)
         self.channel = None
-        print('New Tone: ' + str(freq) + "Hz   Volume: " + str(round(100*amp)))
+        print('New Tone: ' + str(freq) + "Hz   Volume: " + str(round(100*vol)))
         
 
-    def get_sound_buff(self, freq, amp, speaker=None):
+    def get_sound_buff(self, freq, vol, speaker=None):
        
         num_samples = int(round( sample_rate / float(freq) )) # samples in one period
         sound_buff = numpy.zeros((num_samples,2), dtype=numpy.int16)
-        amplitude = int(round((2 ** (bits -1) -1) * amp ))
+        volume = int(round((2 ** (bits -1) -1) * vol ))
         
         for sample in range(num_samples):
             t = float(sample)/sample_rate
             
-            sine = sine_t(amplitude, t, freq)
+            sine = sine_t(volume, t, freq)
             
             if speaker == 'r':
                 sound_buff[sample][1] = sine
@@ -48,8 +48,8 @@ class Tone:
     def get_frequency(self):
         return self.freq
     
-    def get_amplitude(self):
-        return self.amp
+    def get_volume(self):
+        return self.vol
     
     def play(self):
         self.sound.play(-1, fade_ms = self.fade_ms)
@@ -58,16 +58,14 @@ class Tone:
         self.channel = self.sound.play(num_cycles-1, fade_ms = self.fade_ms)
         return self.channel
         
-    
+    def set_volume(self, volume):
+        self.sound.set_volume(volume)
+        print('Volume: ' + str(volume * 100))
+        return 
+
     def stop(self):
         print('Tone Stopped')
         if ( self.fade_ms > 0):
             self.sound.fadeout(self.fade_ms)
             return
         self.sound.stop()
-    
-    
-    
-    
-    
-    

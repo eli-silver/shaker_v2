@@ -10,9 +10,9 @@ from Tone import Tone
 import pygame
 from Window import Window
 from time import sleep
-from Serial_Monitor import Serial_monitor
 import threading
 import serial
+import numpy as np
 
 bits = 16
 sample_rate = 44100
@@ -32,11 +32,9 @@ class Shaker:
         self.tone_sequence = None
         self.fade_ms = 0
         self.speaker = 'r'
-        self.serial_monitor = Serial_monitor()
+        self.total_time = 0
 
         self.window = Window(self)
-
-        
 
     def end_game(self):
         print('GAME OVER')
@@ -83,8 +81,8 @@ class Shaker:
             tone.stop()
                             
     def set_tone_frequency(self, frequency):
-        amplitude = self.tone.get_amplitude()
-        next_tone = self.load_tone(frequency, amplitude, speaker=None, fade_ms=0)
+        volume = self.tone.get_volume()
+        next_tone = self.load_tone(frequency, volume, speaker=None, fade_ms=0)
         if self.tone_running:    
             self.pause_tone()
             self.tone = next_tone
@@ -92,19 +90,20 @@ class Shaker:
         else:
             self.tone=next_tone
         
-    def set_tone_amplitude(self, amplitude, speaker=None, fade_ms=0):
-        if(amplitude >1):
-            amplitude=1
-        if(amplitude < 0):
-            amplitude=0
-        frequency = self.tone.get_frequency()
-        next_tone = self.load_tone(frequency, amplitude, speaker=None, fade_ms=0)
-        if self.tone_running:
-            self.pause_tone()
-            self.tone=next_tone
-            self.play_tone()
-        else:
-            self.tone=next_tone
+    def set_tone_volume(self, volume, speaker=None, fade_ms=0):
+        if(volume >1):
+            volume=1
+        if(volume < 0):
+            volume=0
+        self.tone.set_volume(volume)
+        #frequency = self.tone.get_frequency()
+        #next_tone = self.load_tone(frequency, volume, speaker=None, fade_ms=0)
+        #if self.tone_running:
+        #    self.pause_tone()
+        #    self.tone=next_tone
+        #   self.play_tone()
+        #else:
+        #    self.tone=next_tone
         
     def clear_tone_list(self):
         for tone in self.tone_list:
@@ -139,3 +138,5 @@ class Shaker:
         self.tone_sequence_running = False
         self.tone_running = False
         print('tone sequence complete')
+
+        
