@@ -13,6 +13,7 @@ import pygame_gui
 
 WIDTH, HEIGHT = 1000, 500
 
+
 class Window:
     
     def __init__(self, shaker):
