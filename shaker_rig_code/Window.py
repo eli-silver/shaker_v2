@@ -7,6 +7,7 @@ Created on Tue Dec  6 16:26:04 2022
 """
 from Plot import Plot
 from Serial_Monitor import Serial_Monitor
+from Filter import Filter
 import pygame
 import pygame_gui
 
@@ -23,8 +24,9 @@ class Window:
         self.plot = Plot(self.screen, *self.plot_area )
         self.path = ''
         self.total_time = 0
+        #self.filter = Filter()
 
-        self.get_serial_input = False
+        self.get_serial_input = True
         if self.get_serial_input:
             self.serial_monitor = Serial_Monitor(num_data_bytes = 2, num_traces=4)
             self.serial_monitor.serial_input_background_init()

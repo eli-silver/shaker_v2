@@ -51,17 +51,17 @@ class Tone:
     def get_volume(self):
         return self.vol
     
+    def set_volume(self, volume):
+        self.sound.set_volume(volume)
+        print('Volume: ' + str(volume * 100))
+        return 
+
     def play(self):
         self.sound.play(-1, fade_ms = self.fade_ms)
         
     def play_cycles(self, num_cycles):
         self.channel = self.sound.play(num_cycles-1, fade_ms = self.fade_ms)
         return self.channel
-        
-    def set_volume(self, volume):
-        self.sound.set_volume(volume)
-        print('Volume: ' + str(volume * 100))
-        return 
 
     def stop(self):
         print('Tone Stopped')

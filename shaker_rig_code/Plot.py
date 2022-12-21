@@ -24,8 +24,8 @@ class Plot:
         self.total_time = 0 # 
         self.x_pix_per_sec = 50.0        
         
-        self.Y_MIN = -150
-        self.Y_MAX = 100
+        self.Y_MIN = -500
+        self.Y_MAX = 500
         
         self.plt_grid = True
         self.plt_padding = 5
@@ -71,10 +71,9 @@ class Plot:
             queue = self.az_queue
         queue.append((x,y))
         
-        
 
     def draw_trace(self, queue, color):
-        #pix_queue = self.coords_to_pixels(queue)
+
         pix_queue = []
         x_time_offset = (self.total_time * self.x_pix_per_sec)
         pop_list = []
