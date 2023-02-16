@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 unsigned long timer = 0;
-long loopTime = 150;   // microseconds
+long loopTime = 100;   // microseconds
 unsigned long prev_time = 0;
 unsigned long curr_time = 0;
 
@@ -9,9 +9,9 @@ int prev_val1=0;
 int prev_val2=0;
 int prev_val3=0;
 
-int upper_threshold = 512;
-int lower_threshold = 475;
-int rising = 0;
+int upper_threshold = 100;
+int lower_threshold = 70;
+int rising = 1;
 int camera_trig = 0;
 
 
@@ -63,11 +63,17 @@ void sendToPC(double* data1, double* data2, double* data3)
 }
 
 void setup() {
-  Serial.begin(2000000);
+  Serial.begin(3000000);
   timer = micros();
   pinMode(21, INPUT);
   pinMode(22, INPUT);
   pinMode(23, INPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  digitalWrite(7, HIGH);
+  digitalWrite(8, LOW);
+  digitalWrite(9, LOW);
 }
 
 void loop() {
@@ -79,10 +85,22 @@ void loop() {
   int delta_t = curr_time - prev_time;
   prev_time = curr_time;
 
+  if( val3 >= upper_threshold && rising == 1){
+    camera_trig = 1;
+    rising = 0;
+    digitalWrite(8, HIGH);
+    digitalWrite(9, HIGH);
+  }
+  else if( val3 <= lower_threshold && rising == 0){
+    camera_trig = 0;
+    rising = 1;
+    digitalWrite(8, LOW);
+    digitalWrite(9, LOW);
+  }
 
 
-  if( rising && prev_val3 < upper_threshold && val3 > upper_threshold ) camera_trig = 1;
-  if( !rising && prev_val3 > lower_threshold && val3 < lower_threshold ) camera_trig = 0;
+  //if( rising && prev_val3 < upper_threshold && val3 > upper_threshold ) camera_trig = 1;
+  //if( !rising && prev_val3 > lower_threshold && val3 < lower_threshold ) camera_trig = 0;
   
   //double val1 = (analogRead(21) -512) / 512.0;
   //double val2 = (analogRead(22) -512) / 512.0;

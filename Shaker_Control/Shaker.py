@@ -43,12 +43,14 @@ class Shaker:
         self.init_window()
         self.init_plot()
         self.init_serial_monitor()
-        self.run_serial_monitor = False
+        self.run_serial_monitor = True # set to true if using a microcontroller, false for testing
         if self.run_serial_monitor:
             self.serial_monitor.serial_input_background_init()
         self.init_filter()
 
         self.total_time = 0
+        self.plot_trig = False # false will stream data left to right, true will show snapshots alligned by trigger condition
+        self.plot_num_points = 100
 
         ### begin update loop ###
         self.run = True
@@ -102,9 +104,6 @@ class Shaker:
             pygame.display.update() 
         # when (x) is clicked, exit update loop
         pygame.quit()
-
-    
-    
     
     
     def update_serial_monitor(self, time_delta):
@@ -114,11 +113,32 @@ class Shaker:
         if self.serial_monitor.buff_is_ready():
             # only plotting the last received data point. Data array can have many points
             data = self.serial_monitor.get_buffer()
-            self.plot.add_point('ax', self.total_time, data[0][0])
-            self.plot.add_point('ay', self.total_time, data[0][1])
-            self.plot.add_point('az', self.total_time, data[0][2])
-    
-    
+
+            #self.plot.add_point('ax', self.total_time, data[0][0])
+            #self.plot.add_point('ay', self.total_time, data[0][1])
+            #self.plot.add_point('az', self.total_time, data[0][2])
+            x_out = self.x_filter.apply_filter(data[:,0])
+            y_out = self.y_filter.apply_filter(data[:,1])
+            z_out = self.z_filter.apply_filter(data[:,2])
+            #diff_arr = []
+            #for i in range(666):
+            #    diff_arr.append(data[i][0]-x_out[i])
+            #print(np.mean(diff_arr))
+
+                # plot lp-filtered data trace or raw data trace:
+            self.plot.add_data_frame(data)
+            plot_arr = np.transpose(np.asarray([x_out,y_out,z_out,data[:,3],data[:,4]]))
+            #self.plot.add_data_frame(plot_arr)
+            
+            x_accel,x_accel_std = self.x_filter.find_average_accel()
+            y_accel,y_accel_std = self.y_filter.find_average_accel()
+            z_accel,z_accel_std = self.z_filter.find_average_accel()
+            print([x_accel,y_accel,z_accel])
+            print([x_accel_std, y_accel_std, z_accel_std])
+            self.plot.add_point('ax', self.total_time, x_accel)
+            self.plot.add_point('ay', self.total_time, y_accel)
+            self.plot.add_point('az', self.total_time, z_accel)
+
     def init_tone(self):
         # define a starting tone, init tone variables
         self.tone = self.load_tone(220,0.25,speaker=None)
@@ -143,11 +163,17 @@ class Shaker:
 
     def init_serial_monitor(self):
         # instantiate serial monitor. Pass in info to decode data. Must match values expected from microcontroller
-        self.serial_monitor = Serial_Monitor(num_data_bytes=2, num_traces = 4)
+        self.buff_len = 1000
+        self.serial_monitor = Serial_Monitor(num_data_bytes=2, num_traces = 5, buff_len = self.buff_len)
 
     def init_filter(self):
         # set up filtering of incoming data
-        pass
+        freq = self.tone.get_frequency()
+        sample_rate = 20000
+        self.x_filter = Filter(freq, sample_rate, self.buff_len, 3, 90)
+        self.y_filter = Filter(freq, sample_rate, self.buff_len, 3, 0)
+        self.z_filter = Filter(freq, sample_rate, self.buff_len, 3, 0)
+
 
     def exit(self):
         # end of program code
@@ -249,4 +275,3 @@ class Shaker:
         self.tone_running = False
         print('tone sequence complete')
 
-        
