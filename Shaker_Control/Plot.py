@@ -20,7 +20,7 @@ class Plot:
         self.plt_width = width
         self.plt_height = height
         self.plt_offset = [x,y]
-        self.x_scale = 3
+        self.x_scale = 1.5
         self.y_scale = 1
         self.total_time = 0 
         self.x_pix_per_sec = 50.0        
@@ -31,10 +31,11 @@ class Plot:
         
         self.plt_grid = True
         self.plt_padding = 5
-        
+
         self.ax_queue = []
         self.ay_queue = []
         self.az_queue = []
+        self.at_queue = []
 
         self.num_points_x = math.floor(self.plt_width / self.x_scale)
         self.init_frames()
@@ -46,11 +47,13 @@ class Plot:
         self.update_trace('ax')
         self.update_trace('ay')
         self.update_trace('az')
+        self.update_trace('at')
         
         self.update_frame(self.ax_frame, 'red')
         self.update_frame(self.ay_frame, 'green')
         self.update_frame(self.az_frame, 'blue')
         self.update_frame(self.tg_frame, 'purple')
+
 
     def draw_background(self):
          pygame.draw.rect(self.screen,'grey',self.plot_area)
@@ -79,8 +82,6 @@ class Plot:
                 trig_index = 0
             trig_index += 1
         
-        print(trig_index)
-
         for i in range(self.num_points_x):
             if i + trig_index >= len(frame):
                 data_pt = [0,0,0,0,0]
@@ -119,6 +120,8 @@ class Plot:
             queue = self.ay_queue
         if trace == 'az':
             queue = self.az_queue
+        if trace == 'at':
+            queue = self.at_queue
         queue.append((x,y + self.ACCEL_Y_OFFSET))
     
 
@@ -153,7 +156,10 @@ class Plot:
         if trace == 'az':
             self.draw_trace(self.az_queue, 'blue')
             return self.az_queue
-        
+        if trace == 'at':
+            self.draw_trace(self.at_queue, 'purple')
+    
+
         
     def coord_to_pixel(self,point):
         pix_x = self.plt_offset[0] + point[0]

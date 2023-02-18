@@ -63,7 +63,7 @@ void sendToPC(double* data1, double* data2, double* data3)
 }
 
 void setup() {
-  Serial.begin(3000000);
+  Serial.begin(2000000);
   timer = micros();
   pinMode(21, INPUT);
   pinMode(22, INPUT);

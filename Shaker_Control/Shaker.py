@@ -15,13 +15,18 @@ from Filter import Filter
 import pygame
 import pygame_gui
 from time import sleep
+from datetime import datetime
 import threading
 import serial
 import numpy as np
 
 bits = 16
 sample_rate = 44100
-
+"""
+###
+adjust the load_tone new tone volume, Kp and Ki to get good responsiveness and resolution within the desired measurement range
+###
+"""
 
 class Shaker:
     """
@@ -47,10 +52,15 @@ class Shaker:
         if self.run_serial_monitor:
             self.serial_monitor.serial_input_background_init()
         self.init_filter()
-
+        self.init_control_loop()
+        
         self.total_time = 0
         self.plot_trig = False # false will stream data left to right, true will show snapshots alligned by trigger condition
         self.plot_num_points = 100
+
+        self.stream_data = False
+        self.output_path = '../data/'
+        self.output_file = None
 
         ### begin update loop ###
         self.run = True
@@ -75,8 +85,8 @@ class Shaker:
                 # get info from text entry boxes
                 if (event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED and event.ui_object_id == '#frequency_input'):
                     self.set_tone_frequency(float(event.text))    
-                if (event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED and event.ui_object_id == '#volume_input'):
-                    self.set_tone_volume(float(event.text)/100.0)
+                if (event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED and event.ui_object_id == '#amplitude_input'):
+                    self.set_accel_amplitude(float(event.text))
                 if (event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED and event.ui_object_id == '#seq_path_input'):
                     self.path = event.text
                     self.load_tone_sequence(self.path)
@@ -89,17 +99,23 @@ class Shaker:
                     if (event.ui_element == self.window.button_pause):
                         print('Pause Pressed')
                         self.pause_tone()
-                    
                     if (event.ui_element == self.window.button_play_seq):
                         print('Play Sequence Pressed')
                         self.play_sequence()
+                    if (event.ui_element == self.window.button_start_save):
+                        print('Start Logging Acceleration Data')
+                        self.start_stream_to_csv()
+                    if (event.ui_element == self.window.button_stop_save):
+                        print('Stop Logging Acceleration Data')
+                        self.stop_stream_to_csv()
             # If we expect to have a microcotroller connected, get new serial data
             if self.run_serial_monitor:
                 self.update_serial_monitor(time_delta)
-
+                
             # Update display with new info
             self.window_ui_manager.update( time_delta )
             self.plot.update( time_delta )
+            self.window.update()
             self.window_ui_manager.draw_ui(self.window_screen)
             pygame.display.update() 
         # when (x) is clicked, exit update loop
@@ -114,34 +130,69 @@ class Shaker:
             # only plotting the last received data point. Data array can have many points
             data = self.serial_monitor.get_buffer()
 
-            #self.plot.add_point('ax', self.total_time, data[0][0])
-            #self.plot.add_point('ay', self.total_time, data[0][1])
-            #self.plot.add_point('az', self.total_time, data[0][2])
             x_out = self.x_filter.apply_filter(data[:,0])
             y_out = self.y_filter.apply_filter(data[:,1])
             z_out = self.z_filter.apply_filter(data[:,2])
-            #diff_arr = []
-            #for i in range(666):
-            #    diff_arr.append(data[i][0]-x_out[i])
-            #print(np.mean(diff_arr))
-
-                # plot lp-filtered data trace or raw data trace:
-            self.plot.add_data_frame(data)
-            plot_arr = np.transpose(np.asarray([x_out,y_out,z_out,data[:,3],data[:,4]]))
-            #self.plot.add_data_frame(plot_arr)
             
-            x_accel,x_accel_std = self.x_filter.find_average_accel()
-            y_accel,y_accel_std = self.y_filter.find_average_accel()
-            z_accel,z_accel_std = self.z_filter.find_average_accel()
-            print([x_accel,y_accel,z_accel])
-            print([x_accel_std, y_accel_std, z_accel_std])
-            self.plot.add_point('ax', self.total_time, x_accel)
-            self.plot.add_point('ay', self.total_time, y_accel)
-            self.plot.add_point('az', self.total_time, z_accel)
+            # plot lp-filtered data trace or raw data trace:
+            #self.plot.add_data_frame(data)
+            plot_arr = np.transpose(np.asarray([x_out,y_out,z_out,data[:,3],data[:,4]]))
+            self.plot.add_data_frame(plot_arr)
+            
+            self.x_accel,x_accel_std = self.x_filter.find_average_accel()
+            self.y_accel,y_accel_std = self.y_filter.find_average_accel()
+            self.z_accel,z_accel_std = self.z_filter.find_average_accel()
+            self.plot.add_point('ax', self.total_time, self.x_accel)
+            self.plot.add_point('ay', self.total_time, self.y_accel)
+            self.plot.add_point('az', self.total_time, self.z_accel)
+            self.plot.add_point('at', self.total_time, self.target_accel*100)
+            self.window.update_accel_text(self.x_accel, self.y_accel, self.z_accel, self.target_accel, self.hold_output, self.percent_error)
+            if(self.tone_running):
+                self.update_control_loop(self.target_accel, time_delta)
+
+            #print('Average Accel: (G)')
+            #print('X: %5.3f Y: %5.3f Z: %5.3f' % (self.x_accel/100,self.y_accel/100,self.z_accel/100))
+            #print([x_accel_std, y_accel_std, z_accel_std])
+            if( self.stream_data == True ):
+                curr_time = datetime.now().strftime('%H-%M-%S.%f')[:-3]
+                csv_line = curr_time + ",%5.3f,%5.3f,%5.3f,%5.3f\n" % (self.x_accel/100,self.y_accel/100,self.z_accel/100,self.target_accel)
+                self.output_file.write(csv_line)
+
+
+    def set_accel_amplitude(self, new_target_accel):
+        self.target_accel = new_target_accel
+
+    def update_control_loop(self, target_accel, time_delta): 
+        self.error = target_accel - (self.z_accel / 100.0)
+
+        if(target_accel == 0):
+            target_accel = 0.001
+
+        self.percent_error  = 100 * abs(1 - ((self.z_accel/100) / target_accel))
+        if(self.percent_error < 1):
+            self.hold_output = True
+        else:
+            self.hold_output = False        
+        integral = self.prev_integral
+        derivative =  0
+        #if( self.hold_output == False):
+        if(True):
+            integral += self.error * time_delta
+            derivative = ( self.prev_error - self.error ) / time_delta
+
+        output = self.k_p * self.error + self.k_i * integral + self.k_d * derivative
+        self.prev_error = self.error
+        if ( output < 1 and output >= 0):
+            self.prev_integral = integral
+        #print('percent error: %5.2f' % (self.percent_error))
+        self.set_tone_volume(output)
+        #print('error: %5.3f output: %5.6f' %( self.error, output))
+
+
 
     def init_tone(self):
-        # define a starting tone, init tone variables
-        self.tone = self.load_tone(220,0.25,speaker=None)
+        # define a starting tone, init tone var iables
+        self.tone = self.load_tone(50,0.50,speaker=None)
         self.tone_running = False
         self.tone_sequence_running = False
         self.tone_sequence_path = None
@@ -163,25 +214,43 @@ class Shaker:
 
     def init_serial_monitor(self):
         # instantiate serial monitor. Pass in info to decode data. Must match values expected from microcontroller
-        self.buff_len = 1000
+        self.buff_len = 2000
         self.serial_monitor = Serial_Monitor(num_data_bytes=2, num_traces = 5, buff_len = self.buff_len)
 
     def init_filter(self):
         # set up filtering of incoming data
         freq = self.tone.get_frequency()
-        sample_rate = 20000
+        sample_rate = 10000
         self.x_filter = Filter(freq, sample_rate, self.buff_len, 3, 90)
         self.y_filter = Filter(freq, sample_rate, self.buff_len, 3, 0)
         self.z_filter = Filter(freq, sample_rate, self.buff_len, 3, 0)
+        self.x_accel = 0.0
+        self.y_accel = 0.0
+        self.z_accel = 0.0
+
+    def init_control_loop(self):
+        self.target_accel = 0
+        self.percent_error = 0
+        self.error = 0
+        self.prev_error = 0
+        self.prev_integral = 0
+        self.hold_output = False
+        self.k_p = 0.013
+        self.k_i = 1.8
+        self.k_d = 0.00005
 
 
     def exit(self):
         # end of program code
+        if( self.stream_data == True):
+            self.stop_stream_to_csv()
         print('THANKS FOR SHAKING')
     
     def load_tone(self, freq, amp, speaker=None, fade_ms=0):
         # create a new Tone object. Wrapper function to make things consistent 
-        return Tone(freq, amp, speaker, fade_ms)
+        new_tone = Tone(freq, .5, speaker, fade_ms)
+        new_tone.set_volume(amp)
+        return new_tone
         
     def play_tone(self, tone=None):
         # If a tone can be played, play it. Will play currently loaded tone by default unles tone arg is set.
@@ -210,6 +279,23 @@ class Shaker:
                 return
             else:
                 print('sequence not set')
+
+    def start_accel_sweep(self, start_accel, stop_accel, num, hold_time, trans_time):
+        accel_list = np.linspace(start_accel,stop_accel,num)
+        print(accel_list)
+
+        thread = threading.Thread(target = self.accel_sweep_thread, args=[accel_list,hold_time,trans_time])
+        thread.start()
+        self.set_accel_amplitude(start_accel)
+        self.play_tone()
+
+    def accel_sweep_thread(self, accel_list, hold_time, trans_time):
+        for accel in accel_list:
+            sleep(trans_time)
+            self.set_accel_amplitude(accel)
+            sleep(hold_time)
+        
+
         
     def pause_tone(self,tone=None):
         # Pause current tone. Cannot pause a tone sequence 
@@ -228,7 +314,7 @@ class Shaker:
         # change frequency of currently set tone. If tone is playing, changes to frequency will stop curr
         # tone and create a new one with new frequency. Volume of new tone set to vol of old tone
         volume = self.tone.get_volume()
-        next_tone = self.load_tone(frequency, volume, speaker=None, fade_ms=0)
+        next_tone = self.load_tone(frequency, volume/100, speaker=None, fade_ms=0)
         if self.tone_running:    
             self.pause_tone()
             self.tone = next_tone
@@ -275,3 +361,17 @@ class Shaker:
         self.tone_running = False
         print('tone sequence complete')
 
+
+    def start_stream_to_csv(self):
+        if(self.stream_data == False):
+            self.window.record_label_on()
+            timestr = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            #timestr = strftime("%Y%m%d_%H%M%S")
+            self.output_file = open(self.output_path+'shaker_data_'+timestr+'.csv', 'x')
+            self.stream_data = True
+            self.start_accel_sweep(self.target_accel,self.target_accel + 2, 8, 8, 2)
+
+    def stop_stream_to_csv(self):
+        self.window.record_label_off()
+        self.output_file.close()
+        self.stream_data = False

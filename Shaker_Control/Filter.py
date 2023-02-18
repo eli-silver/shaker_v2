@@ -47,8 +47,8 @@ class Filter:
         trigger_list = []
         accel_list = []
         trigger_index = 0
-        thresh = (max(self.output_buff[5:-5]) + min(self.output_buff[5:-5])) * 0.5
-        print([max(self.output_buff[5:-5]) , min(self.output_buff[5:-5])])
+        thresh = (max(self.output_buff[15:-15]) + min(self.output_buff[15:-15])) * 0.5
+
         for i in range(1,len(self.output_buff)):
             if((self.output_buff[i-1] < thresh) and (self.output_buff[i] >= thresh)):
                 cycle = self.output_buff[trigger_index:i-1]
@@ -60,8 +60,10 @@ class Filter:
             a_max = max(cycle_list[i])
             a_min = min(cycle_list[i])
             accel_list.append((a_max - a_min)/2)
-        
-        return mean(accel_list),std(accel_list)
+        if (len(accel_list) >0):
+            return mean(accel_list),std(accel_list)
+        else:
+            return 0,0
 
     def find_thd(slef):
         pass
