@@ -45,28 +45,25 @@ class Shaker:
     def play_tone(self, tone=None):
         if self.tone_sequence_running:
             print('sequence running, cannot play')
-        elif self.tone_running:
+            return 
+        if self.tone_running:
             print('tone already playing')
-        else:
-            self.tone_running = True
-            if tone==None:
-                
-                self.tone.play()
-            else:
-                tone.play()
+            return
+        self.tone_running = True 
+        tone.play() if tone else self.tone.play()
                 
     def play_sequence(self):
         if self.tone_running:
             self.pause_tone()
-        elif self.tone_sequence_running:
+            return 
+        if self.tone_sequence_running:
             print('sequence already running')
-        else:
-            if self.tone_sequence != None:
-                thread = threading.Thread(target = self.play_tone_sequence)
-                thread.start()
-                return
-            else:
-                print('sequence not set')
+            return 
+        if self.tone_sequence:
+            thread = threading.Thread(target = self.play_tone_sequence)
+            thread.start()
+            return
+        print('sequence not set')
         
     def pause_tone(self,tone=None):
         if self.tone_sequence_running:
