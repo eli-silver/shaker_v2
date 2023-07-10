@@ -15,5 +15,9 @@ def main():
 
 
 if __name__ == "__main__":
+    """
+    Entry point of program. Instantiates Shaker, which is the top level object
+    """
     main()
  
+    "length scale is 3.18 mm"

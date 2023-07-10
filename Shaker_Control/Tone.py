@@ -53,7 +53,7 @@ class Tone:
     
     def set_volume(self, volume):
         self.sound.set_volume(volume)
-        print('Volume: ' + str(volume * 100))
+        print('Volume: %2.2f' % (volume * 100.0))
         return 
 
     def play(self):
