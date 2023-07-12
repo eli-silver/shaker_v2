@@ -397,7 +397,7 @@ class Shaker:
             #timestr = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
             timestr = datetime.now().strftime('%H-%M-%S')
             #self.output_file = open(self.output_path+'shaker_data_'+timestr+'.csv', 'x')
-            self.output_file = open(self.output_path+'shaker_measurement_amp-'+str(self.tone.get_volume())+'_freq-'+str(self.tone.get_frequency())+timestr+'.csv', 'w+')
+            self.output_file = open(self.output_path+'shaker_measurement_amp-'+str(self.target_accel)+'_freq-'+str(self.tone.get_frequency())+'_'+timestr+'.csv', 'w+')
             self.stream_data = True
 
     def stop_stream_to_csv(self):
