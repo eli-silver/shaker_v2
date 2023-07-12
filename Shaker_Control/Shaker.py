@@ -45,7 +45,7 @@ class Shaker:
         self.display = pygame.display
         
         self.max_vol = .3
-        self.run_open_loop = True
+        self.run_open_loop = False
 
         self.init_tone()
         self.init_window()
@@ -62,8 +62,9 @@ class Shaker:
         self.plot_num_points = 100
 
         self.stream_data = False
-        self.output_path = '../data/'
+        self.output_path = '../data/' 
         self.output_file = None
+        self.stream_raw_output = True
         
         
 
@@ -164,8 +165,13 @@ class Shaker:
             #print([x_accel_std, y_accel_std, z_accel_std])
             if( self.stream_data == True ):
                 curr_time = datetime.now().strftime('%H-%M-%S.%f')[:-3]
-                csv_line = curr_time + ",%5.3f,%5.3f,%5.3f,%5.3f\n" % (self.x_accel/100,self.y_accel/100,self.z_accel/100,self.target_accel)
-                self.output_file.write(csv_line)
+                if( not self.stream_raw_output):
+                    csv_line = curr_time + ",%5.3f,%5.3f,%5.3f,%5.3f\n" % (self.x_accel/100,self.y_accel/100,self.z_accel/100,self.target_accel)
+                    self.output_file.write(csv_line)
+                else:
+                    for line in data:
+                        self.output_file.write(','.join(map(str, line))+'\n')
+                
 
 
     def set_accel_amplitude(self, new_target_accel):
@@ -388,11 +394,11 @@ class Shaker:
     def start_stream_to_csv(self):
         if(self.stream_data == False):
             self.window.record_label_on()
-            timestr = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            #timestr = strftime("%Y%m%d_%H%M%S")
-            self.output_file = open(self.output_path+'shaker_data_'+timestr+'.csv', 'x')
+            #timestr = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            timestr = datetime.now().strftime('%H-%M-%S')
+            #self.output_file = open(self.output_path+'shaker_data_'+timestr+'.csv', 'x')
+            self.output_file = open(self.output_path+'shaker_measurement_amp-'+str(self.tone.get_volume())+'_freq-'+str(self.tone.get_frequency())+timestr+'.csv', 'w+')
             self.stream_data = True
-            #self.start_accel_sweep(self.target_accel,self.target_accel + 2, 8, 8, 2)
 
     def stop_stream_to_csv(self):
         self.window.record_label_off()

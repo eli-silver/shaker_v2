@@ -93,9 +93,9 @@ class Window:
         self.display.set_caption('Harris Lab Shaker Control')
         self.ui_manager = pygame_gui.UIManager((WIDTH,HEIGHT))
        
-        self.freq_input_line = pygame_gui.elements.UITextEntryLine(relative_rect=((50,80),(250,40)), manager=self.ui_manager, object_id='#frequency_input' )
-        self.amp_input_line = pygame_gui.elements.UITextEntryLine(relative_rect=((50,180),(250,40)), manager=self.ui_manager, object_id='#amplitude_input' )
-        self.seq_path_input_line = pygame_gui.elements.UITextEntryLine(relative_rect=((50,330),(250,40)), manager=self.ui_manager, object_id='#seq_path_input')
+        self.freq_input_line = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((50,80),(250,40)), manager=self.ui_manager, object_id='#frequency_input' )
+        self.amp_input_line = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((50,180),(250,40)), manager=self.ui_manager, object_id='#amplitude_input' )
+        self.seq_path_input_line = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((50,330),(250,40)), manager=self.ui_manager, object_id='#seq_path_input')
 
         self.label_freq = pygame_gui.elements.UILabel(relative_rect=(pygame.Rect(50,30,200,40)), text='Input Frequency (Hz)', manager=self.ui_manager)
         self.label_amp = pygame_gui.elements.UILabel(relative_rect=(pygame.Rect(50,130,200,40)), text='Input Amplitude (G)',manager=self.ui_manager)
