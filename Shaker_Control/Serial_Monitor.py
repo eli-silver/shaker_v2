@@ -6,7 +6,7 @@ import numpy as np
 import time
 
 class Serial_Monitor:
-    def __init__(self,serial_port='COM10',serial_baud=2000000, num_data_bytes = 2, num_traces = 1, buff_len = 666):
+    def __init__(self,serial_port='COM6',serial_baud=2000000, num_data_bytes = 2, num_traces = 1, buff_len = 666):
         self.port = serial_port
         self.baud = serial_baud
         self.num_data_bytes = num_data_bytes
@@ -67,6 +67,12 @@ class Serial_Monitor:
     def get_buffer(self):
         self.data_buff_ready = False
         return self.prev_data_buff # else, return prev_data_buff: copy of data_buff when it was last full
+    
+    def serial_write(self,val):
+        val = int(round(val))
+        val_str = bytes(str(val), 'utf-8')
+        print(val_str)
+        self.serial_connection.write(val_str)
 
     def close(self):
         self.is_run = False

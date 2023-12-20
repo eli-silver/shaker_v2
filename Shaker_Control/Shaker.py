@@ -44,7 +44,7 @@ class Shaker:
         self.clock = pygame.time.Clock()
         self.display = pygame.display
         
-        self.max_vol = .3
+        self.max_vol = 1
         self.run_open_loop = False
 
         self.init_tone()
@@ -178,6 +178,7 @@ class Shaker:
         self.target_accel = new_target_accel
         if self.run_open_loop:
             self.tone.set_volume(new_target_accel)
+            self.serial_monitor.serial_write(new_target_accel)
 
     def update_control_loop(self, target_accel, time_delta): 
         if self.run_open_loop:
